@@ -1,0 +1,209 @@
+<Window x:Class="SoundPeek.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:SoundPeek.ViewModels"
+        xmlns:models="clr-namespace:SoundPeek.Models"
+        mc:Ignorable="d"
+        Title="SoundPeek"
+        Width="369"
+        MinWidth="369"
+        MaxWidth="369"
+        MaxHeight="480"
+        SizeToContent="Height"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        WindowStartupLocation="Manual">
+
+    <Window.Resources>
+        <!-- Lucide Icons as Vector Geometries -->
+        <!-- Microphone -->
+        <Geometry x:Key="IconMic">
+            M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z M19 10v2a7 7 0 0 1-14 0v-2 M12 19v3 M8 22h8
+        </Geometry>
+        <!-- Headphones -->
+        <Geometry x:Key="IconHeadphones">
+            M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3
+        </Geometry>
+        <!-- Sliders / Equalizer -->
+        <Geometry x:Key="IconSliders">
+            M4 21v-7 M4 10V3 M12 21v-9 M12 8V3 M20 21v-5 M20 12V3 M1 14h6 M9 8h6 M17 16h6
+        </Geometry>
+        <!-- Speaker High -->
+        <Geometry x:Key="IconVolumeHigh">
+            M11 5L6 9H2v6h4l5 4V5z M15.54 8.46a5 5 0 0 1 0 7.07 M19.07 4.93a10 10 0 0 1 0 14.14
+        </Geometry>
+        <!-- Speaker Muted -->
+        <Geometry x:Key="IconVolumeMuted">
+            M11 5L6 9H2v6h4l5 4V5z M23 9l-6 6 M17 9l6 6
+        </Geometry>
+        <!-- Generic App / Music Fallback -->
+        <Geometry x:Key="IconMusic">
+            M9 18V5l12-2v13 M9 9l12-2 M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M18 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6z
+        </Geometry>
+    </Window.Resources>
+
+    <Border Margin="12" CornerRadius="32" Background="#0A0B0D" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="24" ShadowDepth="4" Direction="270" Color="#000000" Opacity="0.6"/>
+        </Border.Effect>
+
+        <Grid ClipToBounds="True">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="57"/> <!-- Top Header -->
+                <RowDefinition Height="Auto"/> <!-- Master Volume Section -->
+                <RowDefinition Height="Auto"/> <!-- Separator -->
+                <RowDefinition Height="*"/>    <!-- Active App Sessions -->
+            </Grid.RowDefinitions>
+
+            <!-- Top Header Bar -->
+            <Border Grid.Row="0" Background="{StaticResource BrushSurface}" 
+                    BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,0,1"
+                    CornerRadius="31,31,0,0" Padding="18,0">
+                <Grid>
+                    <!-- Left: Input & Output Mode Icons -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Style="{StaticResource HeaderIconButton}" ToolTip="Input Audio (Microphone)">
+                            <Path Data="{StaticResource IconMic}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" 
+                                  StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="16" Height="16" Stretch="Uniform"/>
+                        </Button>
+
+                        <Button Style="{StaticResource HeaderIconButton}" Margin="8,0,0,0" ToolTip="Output Audio (Headphones / Speakers)">
+                            <Path Data="{StaticResource IconHeadphones}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" 
+                                  StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="16" Height="16" Stretch="Uniform"/>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- Right: Settings / Mixer Button -->
+                    <Button Style="{StaticResource HeaderIconButton}" HorizontalAlignment="Right" VerticalAlignment="Center"
+                            ToolTip="Pengaturan SoundPeek" Click="OnSettingsClicked">
+                        <Path Data="{StaticResource IconSliders}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" 
+                              StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="16" Height="16" Stretch="Uniform"/>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Master Volume Row -->
+            <Grid Grid.Row="1" Margin="24,18,24,14">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="32"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="45"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Master Speaker Button (Click to Mute/Unmute) -->
+                <Button Grid.Column="0" Command="{Binding ToggleMasterMuteCommand}" 
+                        Background="Transparent" BorderThickness="0" Cursor="Hand"
+                        ToolTip="Klik untuk Mute / Unmute Master"
+                        HorizontalAlignment="Left" VerticalAlignment="Center">
+                    <Path Stroke="{StaticResource BrushIcon}" StrokeThickness="2" 
+                          StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="18" Height="18" Stretch="Uniform">
+                        <Path.Style>
+                            <Style TargetType="Path">
+                                <Setter Property="Data" Value="{StaticResource IconVolumeHigh}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding MasterIsMuted}" Value="True">
+                                        <Setter Property="Data" Value="{StaticResource IconVolumeMuted}"/>
+                                        <Setter Property="Stroke" Value="{StaticResource BrushIconDisabled}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Path.Style>
+                    </Path>
+                </Button>
+
+                <!-- Master Slider (exact 200px width as in SVG) -->
+                <Slider Grid.Column="1" Style="{StaticResource SoundPeekSlider}"
+                        Value="{Binding MasterVolume, Mode=TwoWay}"
+                        Width="200" HorizontalAlignment="Center"/>
+
+                <!-- Percentage Text -->
+                <TextBlock Grid.Column="2" Text="{Binding MasterVolumeText}"
+                           Foreground="{StaticResource BrushText}"
+                           FontSize="12" FontWeight="SemiBold"
+                           HorizontalAlignment="Right" VerticalAlignment="Center"/>
+            </Grid>
+
+            <!-- Separator Line -->
+            <Rectangle Grid.Row="2" Height="1" Fill="{StaticResource BrushBorder}" Margin="24,0,24,8"/>
+
+            <!-- Application Audio Sessions List -->
+            <ScrollViewer Grid.Row="3" Margin="0,0,0,16" MaxHeight="320" 
+                          VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <ItemsControl ItemsSource="{Binding AudioSessions}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type models:AudioSessionItem}">
+                            <Grid Margin="24,8,24,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="32"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="45"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- App Icon or Fallback -->
+                                <Button Grid.Column="0" 
+                                        Command="{Binding DataContext.ToggleSessionMuteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding}"
+                                        Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                        ToolTip="{Binding DisplayName}"
+                                        HorizontalAlignment="Left" VerticalAlignment="Center">
+                                    <Grid Width="24" Height="24">
+                                        <!-- Fallback Icon if process icon is unavailable -->
+                                        <Path Data="{StaticResource IconMusic}" Stroke="{StaticResource BrushAccent}"
+                                              StrokeThickness="1.5" Stretch="Uniform" Width="18" Height="18"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Path.Style>
+                                                <Style TargetType="Path">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Icon}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Path.Style>
+                                        </Path>
+                                        
+                                        <!-- Process Icon -->
+                                        <Image Source="{Binding Icon}" Width="24" Height="24" Stretch="Uniform"
+                                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                                               
+                                        <!-- Overlay mute badge if muted -->
+                                        <Ellipse Width="8" Height="8" Fill="#FF4C4C"
+                                                 HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                                            <Ellipse.Style>
+                                                <Style TargetType="Ellipse">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsMuted}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Ellipse.Style>
+                                        </Ellipse>
+                                    </Grid>
+                                </Button>
+
+                                <!-- App Volume Slider (200px width) -->
+                                <Slider Grid.Column="1" Style="{StaticResource SoundPeekSlider}"
+                                        Value="{Binding Volume, Mode=TwoWay}"
+                                        Width="200" HorizontalAlignment="Center"/>
+
+                                <!-- Percentage Text -->
+                                <TextBlock Grid.Column="2" Text="{Binding VolumeText}"
+                                           Foreground="{StaticResource BrushText}"
+                                           FontSize="12" FontWeight="SemiBold"
+                                           HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+    </Border>
+</Window>
